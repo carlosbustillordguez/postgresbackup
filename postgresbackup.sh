@@ -104,7 +104,7 @@ parse_cmdline() {
     case $1 in
       -h | --help)
         print_usage
-        break
+        exit 0
         ;;
       --host)
         shift
