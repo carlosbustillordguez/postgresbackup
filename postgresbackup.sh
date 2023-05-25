@@ -40,9 +40,13 @@ Optional arguments:
   -h|--help                             Print this help and exit.
   -p|--port DB_PORT                     The database port number. Default value '5432'.
   --backup-directory BACKUP_DIRECTORY   Base backup directory. Default value '$HOME/postgres'.
-  --backup-roles                        Whether to backup or not the roles and permissions. Defautl value 'false'.
+  --backup-roles                        Whether to backup or not the roles and permissions. Default value 'false'.
   --remove-backups-from DAYS            Remove old backups from (-mtime compatible format for the find command). Default value '+5'.
   --exclude-dbs EXCLUDE_DBS             Regex with the databases to exclude in the dump. Default value 'postgres'.
+  --no-owner                            Skip restoration of the database ownership. By default is exported the database ownership.
+  --ssl                                 Whether or with what priority a secure SSL TCP/IP connection will be negotiated with the
+                                        server. When is set, the 'PGSSLMODE=\"require\"' environment variable is defined.
+                                        By default the variable is not defined.
     "
 } # => print_usage()
 
@@ -72,7 +76,7 @@ configure_environment() {
 # DB_USER                 - the user name to perform the operations (value of -u | --user)
 # DB_PASSWORD             - the user name password to perform the operations (value of -p | --password)
 # DB_PORT                 - the Postgres server port (value of --port)
-#                           Defautl value '5432'
+#                           Default value '5432'
 # BACKUP_DIRECTORY        - base backup directory (value of --backup-directory)
 #                           Default value '$HOME/postgres'
 # REMOVE_OLD_BACKUP_FROM  - remove old backups from (-mtime compatible format for the find command)
@@ -81,6 +85,9 @@ configure_environment() {
 #                           Default value 'postgres'
 # BACKUP_ROLES            - whether or not to backup roles (argument --backup-roles). Default value 'false'
 # NO_OWNER                - skip restoration of the database ownership. By default is exported the database ownership
+# PGSSLMODE              -  whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+#                           When is set, the the 'PGSSLMODE="require"' environment variable is defined.
+#                           By default the variable is not defined
 # Arguments:
 #   $@ (array)            - the script's arguments
 #######################################################################
@@ -96,7 +103,7 @@ parse_cmdline() {
 
   # Parse arguments
   declare argv
-  argv=$(getopt -o u:,p:,h --long host:,user:,password:,port:,backup-directory:,remove-backups-from:,exclude-dbs:,backup-roles,no-owner,help -- "$@") || return
+  argv=$(getopt -o u:,p:,h --long host:,user:,password:,port:,backup-directory:,remove-backups-from:,exclude-dbs:,backup-roles,no-owner,ssl,help -- "$@") || return
   # string-split and glob-expand the contents of $argv, putting the first in $1, the second in $2, etc.
   eval "set -- $argv"
 
@@ -147,6 +154,10 @@ parse_cmdline() {
         ;;
       --no-owner)
         NO_OWNER="--no-owner"
+        shift
+        ;;
+      --ssl)
+        export PGSSLMODE="require"
         shift
         ;;
       --)
@@ -295,7 +306,7 @@ backup_postgres_dbs() {
   # Get all databases name
   local databases
   databases=$(
-    psql -h "$db_host" -p "$db_port" -U "$db_user" \
+    psql -h "$db_host" -p "$db_port" -U "$db_user" -d postgres \
       -c "SELECT datname FROM pg_database WHERE datistemplate = false;" \
       | grep -Ev "datname|^---|^\(.* row.*\)" \
       | awk '{print $1}' \

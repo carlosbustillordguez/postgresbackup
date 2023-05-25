@@ -29,6 +29,7 @@ chmod +x postgresbackup.sh
 
 - The backups will be copied by default to `<BACKUP_DIRECTORY>/<DB_HOST>/` (e.g.: `$HOME/postgres/localhost/`). Where `BACKUP_DIRECTORY` is the value of `--backup-directory` script argument (by default `$HOME/postgres`) and `DB_HOST` is the value of the `--host` script argument.
 - By default is exported the databases ownership, to skip this set the `--no-owner` script argument.
+- By default is excluded the `postgres` database from the databases dump. To exclude more databases, set for example `--exclude-dbs 'postgres|azure_maintenance|azure_sys'`
 - Executes the script without arguments or by passing `-h | --help` to see all available options.
 
 ## License
