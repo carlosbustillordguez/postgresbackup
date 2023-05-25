@@ -25,7 +25,7 @@ chmod +x postgresbackup.sh
 ./postgresbackup.sh --host localhost -u postgres -p mysecretpassword --backup-roles
 ```
 
-**NOTE:**
+**NOTES:**
 
 - The backups will be copied by default to `<BACKUP_DIRECTORY>/<DB_HOST>/` (e.g.: `$HOME/postgres/localhost/`). Where `BACKUP_DIRECTORY` is the value of `--backup-directory` script argument (by default `$HOME/postgres`) and `DB_HOST` is the value of the `--host` script argument.
 - By default is exported the databases ownership, to skip this set the `--no-owner` script argument.
