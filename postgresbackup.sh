@@ -41,6 +41,10 @@ Optional arguments:
   -p|--port DB_PORT                     The database port number. Default value '5432'.
   --backup-directory BACKUP_DIRECTORY   Base backup directory. Default value '$HOME/postgres'.
   --backup-roles                        Whether to backup or not the roles and permissions. Default value 'false'.
+  --no-role-passwords                   Do not dump passwords for roles. When restored, roles will have a null password,
+                                        and password authentication will always fail until the password is set.
+                                        This option also helps if access to pg_authid is restricted by some security policy
+                                        such as in Azure PostgreSQL Flexible Servers.
   --remove-backups-from DAYS            Remove old backups from (-mtime compatible format for the find command). Default value '+5'.
   --exclude-dbs EXCLUDE_DBS             Regex with the databases to exclude in the dump. Default value 'postgres'.
   --no-owner                            Skip restoration of the database ownership. By default is exported the database ownership.
@@ -84,6 +88,8 @@ configure_environment() {
 # EXCLUDE_DBS             - regex with the databases to exclude in the dump (value of --exclude-dbs)
 #                           Default value 'postgres'
 # BACKUP_ROLES            - whether or not to backup roles (argument --backup-roles). Default value 'false'
+# NO_ROLE_PASSWORDS       - do not dump passwords for roles (argument --no-role-passwords).
+#                           This only apply when '--backup-roles' argument is set. By default the role passwords are exported.
 # NO_OWNER                - skip restoration of the database ownership. By default is exported the database ownership
 # PGSSLMODE              -  whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
 #                           When is set, the the 'PGSSLMODE="require"' environment variable is defined.
@@ -100,10 +106,11 @@ parse_cmdline() {
   export EXCLUDE_DBS="postgres"
   export BACKUP_ROLES="false"
   export NO_OWNER=""
+  export NO_ROLE_PASSWORDS=""
 
   # Parse arguments
   declare argv
-  argv=$(getopt -o u:,p:,h --long host:,user:,password:,port:,backup-directory:,remove-backups-from:,exclude-dbs:,backup-roles,no-owner,ssl,help -- "$@") || return
+  argv=$(getopt -o u:,p:,h --long host:,user:,password:,port:,backup-directory:,remove-backups-from:,exclude-dbs:,backup-roles,no-role-passwords,no-owner,ssl,help -- "$@") || return
   # string-split and glob-expand the contents of $argv, putting the first in $1, the second in $2, etc.
   eval "set -- $argv"
 
@@ -150,6 +157,10 @@ parse_cmdline() {
         ;;
       --backup-roles)
         BACKUP_ROLES="true"
+        shift
+        ;;
+      --no-role-passwords)
+        NO_ROLE_PASSWORDS="--no-role-passwords"
         shift
         ;;
       --no-owner)
@@ -278,7 +289,7 @@ backup_users_roles() {
   local roles_backup_file
   roles_backup_file="$BACKUP_DIRECTORY/$db_host/roles-$db_host-$(date +%Y%m%d).sql"
 
-  if pg_dumpall -h "$db_host" -p "$db_port" -U "$db_user" --roles-only --file "$roles_backup_file"; then
+  if pg_dumpall -h "$db_host" -p "$db_port" -U "$db_user" --roles-only --file "$roles_backup_file" $NO_ROLE_PASSWORDS; then
     echo "Saved roles at '$roles_backup_file'."
   else
     print_error "The roles backup has been failed"
