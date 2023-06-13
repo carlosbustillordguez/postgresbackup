@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.2.0](https://github.com/carlosbustillordguez/postgresbackup/compare/v1.1.0...v1.2.0) (2023-06-13)
+
+
+### Features
+
+* add capability to not dump passwords for roles ([db78901](https://github.com/carlosbustillordguez/postgresbackup/commit/db78901fe2f56a0815e4a1daf2cfca3e3f2b5824))
+
 ## [1.1.0](https://github.com/carlosbustillordguez/postgresbackup/compare/v1.0.0...v1.1.0) (2023-05-25)
 
 
